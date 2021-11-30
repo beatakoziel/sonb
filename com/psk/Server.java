@@ -7,9 +7,9 @@ public class Server {
     private Long time;
     private Integer weight ;
 
-    public Server(Short id) {
+    public Server(Short id, Integer weight) {
         this.id = id;
-        this.weight = (int) ((Math.random() * (5 - 1)) + 1);
+        this.weight = weight;
     }
 
     public Short getId() {

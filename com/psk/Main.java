@@ -3,10 +3,7 @@ package com.psk;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -15,11 +12,11 @@ public class Main {
     static Long epsilon = 0L;
     static List<ResultGroup> groups = new ArrayList<>();
     static List<Server> servers = new ArrayList<>();
-
-    //TODO ustawic zmienna zawierajaca liczbe wszystkich glosow
-    //ustawic wartosc progowa rozstzygajaca w przypadku jakby wiecej niz 1 wartosc miala wiecej niz 50% glosow
-    //zrobic wylonienie grupy zwycieskiej
-    //zrobic wylonienie zwyciezcy z grupy finalowej poprzez srednia
+    static Double votesPartToAchieveWhenTie = 0.6; //how much of the value of all votes to be achieved in case of a tie - when more than 1 set exceeds 50% of the votes
+    static Integer allAssignedWeightsNum = 0;
+    // co w przypadku remisu grup
+    // co w przypadku braku wylonienia zwyciezcy
+    // zrobic wylonienie zwyciezcy z grupy finalowej poprzez srednia?
 
     public static void main(String[] args) {
         servers = createServers();
@@ -81,18 +78,24 @@ public class Main {
         System.out.println("Write weight:");
         int weightFromUser = sc.nextInt();
 
+        int previousWeight = servers.stream().filter(s -> s.getId().equals(weightAssignChoice))
+                .findFirst()
+                .orElse(new Server((short) 0, 0))
+                .getWeight();
         servers.stream().filter(s -> s.getId().equals(weightAssignChoice))
                 .findFirst()
                 .ifPresent(s -> s.setWeight(weightFromUser));
-
+        allAssignedWeightsNum = allAssignedWeightsNum - previousWeight + weightFromUser;
         pauseLoopUntilEnterPressed();
     }
 
     private static List<Server> createServers() {
         List<Server> servers = new ArrayList<>();
         for (short i = 1; i <= 8; i++) {
-            Server s = new Server(i);
+            int weight = (int) ((Math.random() * (5 - 1)) + 1);
+            Server s = new Server(i, weight);
             servers.add(s);
+            allAssignedWeightsNum += weight;
         }
         return servers;
     }
@@ -104,6 +107,8 @@ public class Main {
 
     private static void printServersWeights() {
         servers.forEach(s -> System.out.printf("Weight of server nr %s: %s%n", s.getId(), s.getWeight()));
+        System.out.println("Sum of weights: " + allAssignedWeightsNum);
+        System.out.println("Votes sum to achieve when tie: " + allAssignedWeightsNum * votesPartToAchieveWhenTie);
         pauseLoopUntilEnterPressed();
     }
 
@@ -137,7 +142,60 @@ public class Main {
     private static void groupValues() {
         List<Server> serversCopy = new ArrayList<>(servers);
         setResultGrouped(serversCopy);
+        Integer maxVotesNum = getMaxVotesNum();
+        List<ResultGroup> result = getBestResultGroups(maxVotesNum);
         System.out.println(groups);
+        ResultGroup winner = getWinner(result);
+        if (winner != null) {
+            System.out.println("Voting group winner => " + winner);
+            Double elementWinner = getElementWinnerFromGroup(winner);
+            if (elementWinner != null && elementWinner != 0) {
+                System.out.println("Voting group element winner => " + elementWinner.longValue());
+            }
+        }
+    }
+
+    private static ResultGroup getWinner(List<ResultGroup> result) {
+        if (result.size() == 1) {
+            return result.get(0);
+        } else if (result.size() == 2) {
+            List<ResultGroup> tieResult = groups.stream()
+                    .filter(g -> g.getVotesNumber() >= (allAssignedWeightsNum * votesPartToAchieveWhenTie))
+                    .collect(Collectors.toList());
+            if (tieResult.size() == 1) {
+                return tieResult.get(0);
+            } else {
+                System.out.println("You should change value of votes part to achieve when tie.");
+            }
+        } else {
+            System.out.println("Something went wrong.");
+        }
+        return null;
+    }
+
+    private static Double getElementWinnerFromGroup(ResultGroup group) {
+        List<Long> groupList = new ArrayList<>(group.getGroupElements());
+        if (groupList.size() == 1) {
+            return Double.valueOf(groupList.get(0));
+        } else if (groupList.size() > 1) {
+            return groupList.stream().mapToLong(e -> e).average().orElse(0);
+        } else {
+            System.out.println("Something went wrong.");
+        }
+        return null;
+    }
+
+    private static List<ResultGroup> getBestResultGroups(Integer maxVotesNum) {
+        return groups.stream()
+                .filter(g -> g.getVotesNumber().equals(maxVotesNum))
+                .collect(Collectors.toList());
+    }
+
+    private static Integer getMaxVotesNum() {
+        return groups.stream()
+                .map(ResultGroup::getVotesNumber)
+                .mapToInt(v -> v)
+                .max().orElseThrow(NoSuchElementException::new);
     }
 
     private static void setResultGrouped(List<Server> servers) {
