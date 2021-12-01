@@ -159,6 +159,7 @@ public class Main {
         if (result.size() == 1) {
             return result.get(0);
         } else if (result.size() == 2) {
+            //ktory ma najwieksza srednia wag
             List<ResultGroup> tieResult = groups.stream()
                     .filter(g -> g.getVotesNumber() >= (allAssignedWeightsNum * votesPartToAchieveWhenTie))
                     .collect(Collectors.toList());
