@@ -3,47 +3,44 @@ package com.psk;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Main {
 
     static boolean loop = true;
-    static Long epsilon = 0L;
+    static boolean timesAlreadySet = false;
+    static Long epsilon = 1L;
     static List<ResultGroup> groups = new ArrayList<>();
     static List<Server> servers = new ArrayList<>();
-    static Double votesPartToAchieveWhenTie = 0.6; //how much of the value of all votes to be achieved in case of a tie - when more than 1 set exceeds 50% of the votes
+    static Double votesPartToAchieveWhenTie = 0.6; //how much of the value of all votes to be achieved in case of a
+    // tie - when more than 1 set exceeds 50% of the votes
     static Integer allAssignedWeightsNum = 0;
-    // co w przypadku remisu grup
-    // co w przypadku braku wylonienia zwyciezcy
-    // zrobic wylonienie zwyciezcy z grupy finalowej poprzez srednia?
 
     public static void main(String[] args) {
-        // create list of 8 servers
         servers = createServers();
         Scanner sc = new Scanner(System.in);
 
         while (loop) {
-            // print choices to use in menu
             printMainMenu();
-            // read choice from input
             int menuChoice = sc.nextInt();
 
             switch (menuChoice) {
                 case 1:
-                    // create threads for each server and set time field as current time
                     createThreadsForServersWithCurrentTime();
                     break;
                 case 2:
-                    // assign weight to each server based on user input
                     assignWeightToServerFromUser(sc);
                     break;
                 case 3:
-                    // set value of epsilon variable
                     assignEpsilon(sc);
                     break;
                 case 4:
-                    // print time of each server/thread creation
                     printServersTimes();
                     break;
                 case 5:
@@ -79,6 +76,10 @@ public class Main {
     }
 
     private static void assignWeightToServerFromUser(Scanner sc) {
+        if (timesAlreadySet) {
+            System.out.println("Times are already set");
+            return;
+        }
         System.out.println("Write number of server you would like to assign weight to:");
         short weightAssignChoice = sc.nextShort();
 
@@ -93,13 +94,14 @@ public class Main {
                 .findFirst()
                 .ifPresent(s -> s.setWeight(weightFromUser));
         allAssignedWeightsNum = allAssignedWeightsNum - previousWeight + weightFromUser;
+        timesAlreadySet = true;
         pauseLoopUntilEnterPressed();
     }
 
     private static List<Server> createServers() {
         List<Server> servers = new ArrayList<>();
         for (short i = 1; i <= 8; i++) {
-            int weight = (int) ((Math.random() * (5 - 1)) + 1);
+            int weight = 1;
             Server s = new Server(i, weight);
             servers.add(s);
             allAssignedWeightsNum += weight;
@@ -121,10 +123,10 @@ public class Main {
 
     private static void createThreadsForServersWithCurrentTime() {
         servers.forEach(s -> {
-            Thread thread = new Thread(() -> s.setTime(Timestamp.valueOf(LocalDateTime.now()).getTime()));
+            long finalTimestamp = getTimestamp();
+            Thread thread = new Thread(() -> s.setTime(finalTimestamp));
             thread.start();
             try {
-                // set thread to waiting state
                 thread.join();
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -134,6 +136,18 @@ public class Main {
 
         System.out.println("Created threads and assigned time for each server.");
         pauseLoopUntilEnterPressed();
+    }
+
+    private static long getTimestamp() {
+        long timestamp;
+        do {
+            timestamp = Timestamp.valueOf(LocalDateTime.now()).getTime();
+        } while (timestampExists(timestamp));
+        return timestamp;
+    }
+
+    private static boolean timestampExists(Long timestamp) {
+        return servers.stream().anyMatch(server -> timestamp.equals(server.getTime()));
     }
 
     private static void assignEpsilon(Scanner sc) {
@@ -161,25 +175,20 @@ public class Main {
                 System.out.println("Voting group element winner => " + elementWinner.longValue());
             }
         }
+        pauseLoopUntilEnterPressed();
     }
 
     private static ResultGroup getWinner(List<ResultGroup> result) {
         if (result.size() == 1) {
             return result.get(0);
-        } else if (result.size() == 2) {
-            //ktory ma najwieksza srednia wag
-            List<ResultGroup> tieResult = groups.stream()
-                    .filter(g -> g.getVotesNumber() >= (allAssignedWeightsNum * votesPartToAchieveWhenTie))
-                    .collect(Collectors.toList());
-            if (tieResult.size() == 1) {
-                return tieResult.get(0);
-            } else {
-                System.out.println("You should change value of votes part to achieve when tie.");
-            }
+        } else if (result.size() > 1) {
+            return result.stream()
+                    .max(Comparator.comparing(group -> group.getVotesNumber() / group.getGroupElements().size()))
+                    .orElse(null);
         } else {
             System.out.println("Something went wrong.");
+            return null;
         }
-        return null;
     }
 
     private static Double getElementWinnerFromGroup(ResultGroup group) {
@@ -190,8 +199,8 @@ public class Main {
             return groupList.stream().mapToLong(e -> e).average().orElse(0);
         } else {
             System.out.println("Something went wrong.");
+            return null;
         }
-        return null;
     }
 
     private static List<ResultGroup> getBestResultGroups(Integer maxVotesNum) {
