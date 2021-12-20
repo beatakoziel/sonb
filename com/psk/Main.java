@@ -50,7 +50,7 @@ public class Main {
                     printEpsilon();
                     break;
                 case 7:
-                    groupValues();
+                    processVoting();
                     break;
                 case 8:
                     loop = false;
@@ -161,13 +161,11 @@ public class Main {
         pauseLoopUntilEnterPressed();
     }
 
-    private static void groupValues() {
+    private static void processVoting() {
         List<Server> serversCopy = new ArrayList<>(servers);
         setResultGrouped(serversCopy);
-        Integer maxVotesNum = getMaxVotesNum();
-        List<ResultGroup> result = getBestResultGroups(maxVotesNum);
         System.out.println(groups);
-        ResultGroup winner = getWinner(result);
+        ResultGroup winner = getGroupWinner(groups);
         if (winner != null) {
             System.out.println("Voting group winner => " + winner);
             Double elementWinner = getElementWinnerFromGroup(winner);
@@ -178,12 +176,12 @@ public class Main {
         pauseLoopUntilEnterPressed();
     }
 
-    private static ResultGroup getWinner(List<ResultGroup> result) {
+    private static ResultGroup getGroupWinner(List<ResultGroup> result) {
         if (result.size() == 1) {
             return result.get(0);
         } else if (result.size() > 1) {
             return result.stream()
-                    .max(Comparator.comparing(group -> group.getVotesNumber() / group.getGroupElements().size()))
+                    .max(Comparator.comparing(ResultGroup::getVotesNumber))
                     .orElse(null);
         } else {
             System.out.println("Something went wrong.");
@@ -201,12 +199,6 @@ public class Main {
             System.out.println("Something went wrong.");
             return null;
         }
-    }
-
-    private static List<ResultGroup> getBestResultGroups(Integer maxVotesNum) {
-        return groups.stream()
-                .filter(g -> g.getVotesNumber().equals(maxVotesNum))
-                .collect(Collectors.toList());
     }
 
     private static Integer getMaxVotesNum() {
