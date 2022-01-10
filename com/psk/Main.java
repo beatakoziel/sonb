@@ -1,6 +1,10 @@
 package com.psk;
 
-import java.io.IOException;
+import com.psk.application.MenuManager;
+import com.psk.application.VotingManager;
+import com.psk.domain.ResultGroup;
+import com.psk.domain.Server;
+
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,89 +17,59 @@ import java.util.stream.Collectors;
 
 public class Main {
 
-    static boolean loop = true;
+/*    static boolean loop = true;
     static boolean timesAlreadySet = false;
     static Long epsilon = 1L;
     static List<ResultGroup> groups = new ArrayList<>();
-    static List<Server> servers = new ArrayList<>();
-    static Double votesPartToAchieveWhenTie = 0.6; //how much of the value of all votes to be achieved in case of a
+    static List<Server> servers = new ArrayList<>();*/
+    //static Double votesPartToAchieveWhenTie = 0.6; //how much of the value of all votes to be achieved in case of a
     // tie - when more than 1 set exceeds 50% of the votes
-    static Integer allAssignedWeightsNum = 0;
+    //static Integer allAssignedWeightsNum = 0;
 
     public static void main(String[] args) {
+        boolean loop = true;
+        Long epsilon = 1L;
+        List<ResultGroup> groups = new ArrayList<>();
+        List<Server> servers = new ArrayList<>();
         servers = createServers();
         Scanner sc = new Scanner(System.in);
-
+        MenuManager menuManager = new MenuManager();
+        VotingManager votingManager = new VotingManager();
         while (loop) {
-            printMainMenu();
+            menuManager.printMainMenu();
             int menuChoice = sc.nextInt();
 
             switch (menuChoice) {
                 case 1:
-                    createThreadsForServersWithCurrentTime();
+                    servers = menuManager.createThreadsForServersWithCurrentTime(servers);
                     break;
                 case 2:
-                    assignWeightToServerFromUser(sc);
+                    servers = menuManager.assignWeightToServerFromUser(sc, servers);
                     break;
                 case 3:
-                    assignEpsilon(sc);
+                    epsilon = menuManager.getEpsilonFromUser(sc);
                     break;
                 case 4:
-                    printServersTimes();
+                    menuManager.printServersTimes(servers);
                     break;
                 case 5:
-                    printServersWeights();
+                    menuManager.printServersWeights(servers);
                     break;
                 case 6:
-                    printEpsilon();
+                    menuManager.printEpsilon(epsilon);
                     break;
                 case 7:
-                    processVoting();
+                    groups = new ArrayList<>();
+                    votingManager.processVoting(servers, groups, epsilon, menuManager);
                     break;
                 case 8:
                     loop = false;
                     break;
                 default:
                     System.out.println("Make sure that you selected correct number from the menu.");
-                    pauseLoopUntilEnterPressed();
+                    menuManager.pauseLoopUntilEnterPressed();
             }
         }
-    }
-
-    private static void printMainMenu() {
-        System.out.println("========= MENU =========");
-        System.out.println("1. Set servers times.");
-        System.out.println("2. Set server weight.");
-        System.out.println("3. Set epsilon - allowed difference between signals.");
-        System.out.println("4. Print servers times.");
-        System.out.println("5. Print servers weights.");
-        System.out.println("6. Print epsilon.");
-        System.out.println("7. Group signals.");
-        System.out.println("8. Exit.");
-        System.out.println("Choose option from menu:");
-    }
-
-    private static void assignWeightToServerFromUser(Scanner sc) {
-        if (timesAlreadySet) {
-            System.out.println("Times are already set");
-            return;
-        }
-        System.out.println("Write number of server you would like to assign weight to:");
-        short weightAssignChoice = sc.nextShort();
-
-        System.out.println("Write weight:");
-        int weightFromUser = sc.nextInt();
-
-        int previousWeight = servers.stream().filter(s -> s.getId().equals(weightAssignChoice))
-                .findFirst()
-                .orElse(new Server((short) 0, 0))
-                .getWeight();
-        servers.stream().filter(s -> s.getId().equals(weightAssignChoice))
-                .findFirst()
-                .ifPresent(s -> s.setWeight(weightFromUser));
-        allAssignedWeightsNum = allAssignedWeightsNum - previousWeight + weightFromUser;
-        timesAlreadySet = true;
-        pauseLoopUntilEnterPressed();
     }
 
     private static List<Server> createServers() {
@@ -104,149 +78,10 @@ public class Main {
             int weight = 1;
             Server s = new Server(i, weight);
             servers.add(s);
-            allAssignedWeightsNum += weight;
+            //allAssignedWeightsNum += weight;
         }
         return servers;
     }
 
-    private static void printServersTimes() {
-        servers.forEach(s -> System.out.printf("Time of server nr %s: %s%n", s.getId(), s.getTime()));
-        pauseLoopUntilEnterPressed();
-    }
 
-    private static void printServersWeights() {
-        servers.forEach(s -> System.out.printf("Weight of server nr %s: %s%n", s.getId(), s.getWeight()));
-        System.out.println("Sum of weights: " + allAssignedWeightsNum);
-        System.out.println("Votes sum to achieve when tie: " + allAssignedWeightsNum * votesPartToAchieveWhenTie);
-        pauseLoopUntilEnterPressed();
-    }
-
-    private static void createThreadsForServersWithCurrentTime() {
-        servers.forEach(s -> {
-            long finalTimestamp = getTimestamp();
-            Thread thread = new Thread(() -> s.setTime(finalTimestamp));
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                loop = false;
-            }
-        });
-
-        System.out.println("Created threads and assigned time for each server.");
-        pauseLoopUntilEnterPressed();
-    }
-
-    private static long getTimestamp() {
-        long timestamp;
-        do {
-            timestamp = Timestamp.valueOf(LocalDateTime.now()).getTime();
-        } while (timestampExists(timestamp));
-        return timestamp;
-    }
-
-    private static boolean timestampExists(Long timestamp) {
-        return servers.stream().anyMatch(server -> timestamp.equals(server.getTime()));
-    }
-
-    private static void assignEpsilon(Scanner sc) {
-        System.out.println("Write epsilon:");
-        epsilon = sc.nextLong();
-        pauseLoopUntilEnterPressed();
-    }
-
-    private static void printEpsilon() {
-        System.out.println(epsilon);
-        pauseLoopUntilEnterPressed();
-    }
-
-    private static void processVoting() {
-        List<Server> serversCopy = new ArrayList<>(servers);
-        setResultGrouped(serversCopy);
-        System.out.println(groups);
-        ResultGroup winner = getGroupWinner(groups);
-        if (winner != null) {
-            System.out.println("Voting group winner => " + winner);
-            Double elementWinner = getElementWinnerFromGroup(winner);
-            if (elementWinner != null && elementWinner != 0) {
-                System.out.println("Voting group element winner => " + elementWinner.longValue());
-            }
-        }
-        pauseLoopUntilEnterPressed();
-    }
-
-    private static ResultGroup getGroupWinner(List<ResultGroup> result) {
-        if (result.size() == 1) {
-            return result.get(0);
-        } else if (result.size() > 1) {
-            return result.stream()
-                    .max(Comparator.comparing(ResultGroup::getVotesNumber))
-                    .orElse(null);
-        } else {
-            System.out.println("Something went wrong.");
-            return null;
-        }
-    }
-
-    private static Double getElementWinnerFromGroup(ResultGroup group) {
-        List<Long> groupList = new ArrayList<>(group.getGroupElements());
-        if (groupList.size() == 1) {
-            return Double.valueOf(groupList.get(0));
-        } else if (groupList.size() > 1) {
-            return groupList.stream().mapToLong(e -> e).average().orElse(0);
-        } else {
-            System.out.println("Something went wrong.");
-            return null;
-        }
-    }
-
-    private static Integer getMaxVotesNum() {
-        return groups.stream()
-                .map(ResultGroup::getVotesNumber)
-                .mapToInt(v -> v)
-                .max().orElseThrow(NoSuchElementException::new);
-    }
-
-    private static void setResultGrouped(List<Server> servers) {
-        if (servers.size() != 0) {
-            for (int i = 0; i < servers.size(); i++) {
-                Long time = servers.get(i).getTime();
-                List<Server> groupServer = getGroupServers(servers, time);
-                Integer votesNumber = getVotesNumber(groupServer);
-                Set<Long> groupElements = getGroupElements(groupServer);
-                groups.add(new ResultGroup(votesNumber, groupElements));
-                servers.removeAll(groupServer);
-                setResultGrouped(servers);
-            }
-        }
-    }
-
-    private static Set<Long> getGroupElements(List<Server> groupServer) {
-        return groupServer.stream()
-                .map(Server::getTime)
-                .collect(Collectors.toSet());
-    }
-
-    private static Integer getVotesNumber(List<Server> groupServer) {
-        return groupServer.stream()
-                .map(Server::getWeight)
-                .mapToInt(Integer::intValue).sum();
-    }
-
-    private static List<Server> getGroupServers(List<Server> servers, Long time) {
-        return servers.stream()
-                .filter(s -> ((s.getTime() <= (time + epsilon)) && (s.getTime() >= (time - epsilon))))
-                .collect(Collectors.toList());
-    }
-
-    private static void pauseLoopUntilEnterPressed() {
-        System.out.println("Press enter to continue...");
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            e.printStackTrace();
-            loop = false;
-        }
-    }
 }

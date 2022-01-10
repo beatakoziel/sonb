@@ -1,4 +1,4 @@
-package com.psk;
+package com.psk.domain;
 
 import java.util.Objects;
 
@@ -9,6 +9,12 @@ public class Server {
 
     public Server(Short id, Integer weight) {
         this.id = id;
+        this.weight = weight;
+    }
+
+    public Server(Short id, Long time, Integer weight) {
+        this.id = id;
+        this.time = time;
         this.weight = weight;
     }
 

@@ -1,4 +1,4 @@
-package com.psk;
+package com.psk.domain;
 
 import java.util.Set;
 
