@@ -1,12 +1,13 @@
 package com.psk.domain;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class ResultGroup {
     private final Integer votesNumber;
-    private Set<Long> groupElements;
+    private Set<Server> groupElements;
 
-    public ResultGroup(Integer votesNumber, Set<Long> groupElements) {
+    public ResultGroup(Integer votesNumber, Set<Server> groupElements) {
         this.votesNumber = votesNumber;
         this.groupElements = groupElements;
     }
@@ -15,11 +16,11 @@ public class ResultGroup {
         return votesNumber;
     }
 
-    public Set<Long> getGroupElements() {
+    public Set<Server> getGroupElements() {
         return groupElements;
     }
 
-    public void setGroupElements(Set<Long> elements) {
+    public void setGroupElements(Set<Server> elements) {
         this.groupElements = elements;
     }
 
@@ -29,5 +30,18 @@ public class ResultGroup {
                 "votesNumber=" + votesNumber +
                 ", groupElements=" + groupElements +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ResultGroup that = (ResultGroup) o;
+        return Objects.equals(votesNumber, that.votesNumber) && Objects.equals(groupElements, that.groupElements);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(votesNumber, groupElements);
     }
 }

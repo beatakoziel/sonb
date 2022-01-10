@@ -12,19 +12,36 @@ class VotingManagerTest {
 
     VotingManager votingManager = new VotingManager();
 
+    public static final Server SERVER_1 = new Server((short) 1, 1641811175613L, 2);
+    public static final Server SERVER_2 = new Server((short) 2, 1641811175623L, 3);
+    public static final Server SERVER_3 = new Server((short) 3, 1641811175624L, 4);
+    public static final Server SERVER_4 = new Server((short) 3, 1641811175625L, 4);
+
     @Test
-    void getGroupWinner() {
+    void shouldGetElementWinnerWithMoreVotes() {
         //given
+        ResultGroup resultGroup = new ResultGroup(7, new HashSet<>(Arrays.asList(SERVER_2, SERVER_3)));
         //when
-        //Double result = votingManager.getElementWinnerFromGroup()
+        Long result = votingManager.getElementWinnerFromGroup(resultGroup);
         //then
+        assertEquals(SERVER_3.getTime(), result);
+    }
+
+    @Test
+    void shouldGetOneOfEqualWeightElementAsAWinner() {
+        //given
+        ResultGroup resultGroup = new ResultGroup(8, new HashSet<>(Arrays.asList(SERVER_2, SERVER_4, SERVER_3)));
+        //when
+        Long result = votingManager.getElementWinnerFromGroup(resultGroup);
+        //then
+        assertTrue(result.equals(SERVER_3.getTime()) || result.equals(SERVER_4.getTime()));
     }
 
     @Test
     void shouldGetWinnerResultGroupWithMoreVotes() {
         //given
         List<ResultGroup> resultGroups = getResultGroupsList();
-        ResultGroup expectedResultGroup = new ResultGroup(4, new HashSet<>(Arrays.asList(1641811175623L, 1641811175624L)));
+        ResultGroup expectedResultGroup = new ResultGroup(7, new HashSet<>(Arrays.asList(SERVER_2, SERVER_3)));
         //when
         ResultGroup result = votingManager.getGroupWinner(resultGroups);
         //then
@@ -44,16 +61,16 @@ class VotingManagerTest {
 
     private List<Server> getServers() {
         List<Server> servers = new ArrayList<>();
-        servers.add(new Server((short) 1, 1641811175613L, 2));
-        servers.add(new Server((short) 1, 1641811175624L, 2));
-        servers.add(new Server((short) 1, 1641811175623L, 2));
+        servers.add(SERVER_1);
+        servers.add(SERVER_2);
+        servers.add(SERVER_3);
         return servers;
     }
 
     private List<ResultGroup> getResultGroupsList() {
         List<ResultGroup> expectedResult = new ArrayList<>();
-        expectedResult.add(new ResultGroup(2, Collections.singleton(1641811175613L)));
-        expectedResult.add(new ResultGroup(4, new HashSet<>(Arrays.asList(1641811175623L, 1641811175624L))));
+        expectedResult.add(new ResultGroup(2, Collections.singleton(SERVER_1)));
+        expectedResult.add(new ResultGroup(7, new HashSet<>(Arrays.asList(SERVER_2, SERVER_3))));
         return expectedResult;
     }
 }

@@ -15,9 +15,9 @@ public class VotingManager {
         ResultGroup winner = getGroupWinner(groups);
         if (winner != null) {
             System.out.println("Voting group winner => " + winner);
-            Double elementWinner = getElementWinnerFromGroup(winner);
+            Long elementWinner = getElementWinnerFromGroup(winner);
             if (elementWinner != null && elementWinner != 0) {
-                System.out.println("Voting group element winner => " + elementWinner.longValue());
+                System.out.println("Voting group element winner => " + elementWinner);
             }
         }
         menuManager.pauseLoopUntilEnterPressed();
@@ -36,24 +36,20 @@ public class VotingManager {
         }
     }
 
-    protected Double getElementWinnerFromGroup(ResultGroup group) {
-        List<Long> groupList = new ArrayList<>(group.getGroupElements());
+    protected Long getElementWinnerFromGroup(ResultGroup group) {
+        List<Server> groupList = new ArrayList<>(group.getGroupElements());
         if (groupList.size() == 1) {
-            return Double.valueOf(groupList.get(0));
+            return groupList.get(0).getTime();
         } else if (groupList.size() > 1) {
-            return groupList.stream().mapToLong(e -> e).average().orElse(0);
+            return group.getGroupElements().stream()
+                    .max(Comparator.comparing(Server::getWeight))
+                    .orElseThrow(NoSuchElementException::new)
+                    .getTime();
         } else {
             System.out.println("Something went wrong.");
             return null;
         }
     }
-
-/*    private Integer getMaxVotesNum(List<ResultGroup> groups) {
-        return groups.stream()
-                .map(ResultGroup::getVotesNumber)
-                .mapToInt(v -> v)
-                .max().orElseThrow(NoSuchElementException::new);
-    }*/
 
     protected List<ResultGroup> getResultGrouped(List<Server> servers, List<ResultGroup> groups, Long epsilon) {
         if (servers.size() != 0) {
@@ -61,19 +57,12 @@ public class VotingManager {
                 Long time = servers.get(i).getTime();
                 List<Server> groupServer = getGroupServers(servers, time, epsilon);
                 Integer votesNumber = getVotesNumber(groupServer);
-                Set<Long> groupElements = getGroupElements(groupServer);
-                groups.add(new ResultGroup(votesNumber, groupElements));
+                groups.add(new ResultGroup(votesNumber, new HashSet<>(groupServer)));
                 servers.removeAll(groupServer);
                 getResultGrouped(servers, groups, epsilon);
             }
         }
         return groups;
-    }
-
-    private Set<Long> getGroupElements(List<Server> groupServer) {
-        return groupServer.stream()
-                .map(Server::getTime)
-                .collect(Collectors.toSet());
     }
 
     private Integer getVotesNumber(List<Server> groupServer) {
