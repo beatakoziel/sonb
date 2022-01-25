@@ -1,5 +1,6 @@
 package com.psk;
 
+import com.psk.application.BugInjector;
 import com.psk.application.MenuManager;
 import com.psk.application.VotingManager;
 import com.psk.domain.ResultGroup;
@@ -35,6 +36,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         MenuManager menuManager = new MenuManager();
         VotingManager votingManager = new VotingManager();
+        BugInjector bugInjector = new BugInjector();
         while (loop) {
             menuManager.printMainMenu();
             int menuChoice = sc.nextInt();
@@ -63,6 +65,9 @@ public class Main {
                     votingManager.processVoting(servers, groups, epsilon, menuManager);
                     break;
                 case 8:
+                    servers = bugInjector.choseBug(sc, servers);
+                    break;
+                case 9:
                     loop = false;
                     break;
                 default:

@@ -10,6 +10,10 @@ public class VotingManager {
 
     public void processVoting(List<Server> servers, List<ResultGroup> groups, Long epsilon, MenuManager menuManager) {
         List<Server> serversCopy = new ArrayList<>(servers);
+
+        // fighting against first bug injector
+        serversCopy.stream().filter(server -> server != null);
+
         groups = getResultGrouped(serversCopy, groups, epsilon);
         System.out.println(groups);
         ResultGroup winner = getGroupWinner(groups);
