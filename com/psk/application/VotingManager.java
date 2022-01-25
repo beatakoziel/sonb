@@ -59,6 +59,10 @@ public class VotingManager {
     }
 
     protected List<ResultGroup> getResultGrouped(List<Server> servers, List<ResultGroup> groups, Long epsilon) {
+        if (epsilon <= 0) {
+            System.out.printf("BUG DETECTED! Epsilon is a negative value so I reset to value 1\n");
+            epsilon = 1L;
+        }
         if (servers.size() != 0) {
             for (int i = 0; i < servers.size(); i++) {
                 Long time = servers.get(i).getTime();

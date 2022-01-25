@@ -65,9 +65,12 @@ public class Main {
                     votingManager.processVoting(servers, groups, epsilon, menuManager);
                     break;
                 case 8:
-                    servers = bugInjector.choseBug(sc, servers);
+                    servers = bugInjector.clearRandomServerTime(servers);
                     break;
                 case 9:
+                    epsilon = bugInjector.setEpsilonNegative();
+                    break;
+                case 11:
                     loop = false;
                     break;
                 default:
