@@ -11,7 +11,7 @@ public class BugInjector {
     public List<Server> choseBug(Scanner sc, List<Server> servers) {
         List<Server> resultServers = new ArrayList<>();
         System.out.println("BUG INJECTIONS");
-        System.out.println("1. Clear random server");
+        System.out.println("1. Clear random servers time");
         System.out.println("2. xxx");
         System.out.println("3. xxx");
 
@@ -30,8 +30,8 @@ public class BugInjector {
         int length = servers.size();
         int randomNo;
         randomNo = ThreadLocalRandom.current().nextInt(0, length);
-        System.out.println("BUG INJECTOR - I'm cleaning server no " + randomNo);
-        servers.toArray()[randomNo] = null;
+        System.out.println("BUG INJECTOR - I'm cleaning time of server no " + randomNo);
+        servers.get(randomNo).setTime(0);
 
         return servers;
     }

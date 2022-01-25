@@ -12,7 +12,10 @@ public class VotingManager {
         List<Server> serversCopy = new ArrayList<>(servers);
 
         // fighting against first bug injector
-        serversCopy.stream().filter(server -> server != null);
+        boolean elementRemoved = serversCopy.removeIf(el -> (el.getTime() == 0));
+        if (elementRemoved) {
+            System.out.printf("BUG DETECTED! Removed servers with time = 0\n");
+        }
 
         groups = getResultGrouped(serversCopy, groups, epsilon);
         System.out.println(groups);
