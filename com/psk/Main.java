@@ -1,19 +1,14 @@
 package com.psk;
 
+import com.psk.application.BugInjector;
 import com.psk.application.MenuManager;
 import com.psk.application.VotingManager;
 import com.psk.domain.ResultGroup;
 import com.psk.domain.Server;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Main {
 
@@ -35,6 +30,7 @@ public class Main {
         Scanner sc = new Scanner(System.in);
         MenuManager menuManager = new MenuManager();
         VotingManager votingManager = new VotingManager();
+        BugInjector bugInjector = new BugInjector();
         while (loop) {
             menuManager.printMainMenu();
             int menuChoice = sc.nextInt();
@@ -63,6 +59,18 @@ public class Main {
                     votingManager.processVoting(servers, groups, epsilon, menuManager);
                     break;
                 case 8:
+                    servers = bugInjector.clearRandomServerTime(servers);
+                    menuManager.pauseLoopUntilEnterPressed();
+                    break;
+                case 9:
+                    epsilon = bugInjector.setEpsilonNegative();
+                    menuManager.pauseLoopUntilEnterPressed();
+                    break;
+                case 10:
+                    servers = bugInjector.setAbnormalServerTime(servers);
+                    menuManager.pauseLoopUntilEnterPressed();
+                    break;
+                case 11:
                     loop = false;
                     break;
                 default:
