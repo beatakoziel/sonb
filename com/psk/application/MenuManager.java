@@ -20,9 +20,9 @@ public class MenuManager {
         System.out.println("5. Print servers weights.");
         System.out.println("6. Print epsilon.");
         System.out.println("7. Group signals.");
-        System.out.println("8. Bug injector - remove time from random server");
-        System.out.println("9. Bug injector - set epsilon negative");
-        System.out.println("10. Bug injector - xxx");
+        System.out.println("8. Bug injector - remove time from random server.");
+        System.out.println("9. Bug injector - set epsilon negative.");
+        System.out.println("10. Bug injector - set an abnormal server time.");
         System.out.println("11. Exit.");
         System.out.println("Choose option from menu:");
     }
